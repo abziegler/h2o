@@ -55,7 +55,14 @@ class SectionOutlineSerializer(serializers.ModelSerializer):
     def get_citation(self, node):
         if node.resource_type == 'Case':
             if node.resource and node.resource.citations and len(node.resource.citations) > 0:
-                return node.resource.citations[0]['cite']
+                try:
+                    return node.resource.citations[0]['cite']
+                except KeyError:
+                    vol = node.resource.citations[0]['volume']
+                    reporter = node.resource.citations[0]['reporter']
+                    page = node.resource.citations[0]['page']
+                    constructed_flp_citation = f"{vol} {reporter} {page}"
+                    return constructed_flp_citation
         return None
 
     class Meta:
