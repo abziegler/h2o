@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from test.test_helpers import check_response
-from main.utils import looks_like_citation
+from main.utils import looks_like_citation, looks_like_casename
 from .models import SearchIndex
 
 type_param_to_category = {'cases': 'case', 'casebooks': 'casebook', 'users': 'user'}
@@ -47,9 +47,36 @@ def search(request):
     if category == 'case' and partial and looks_like_citation(query):
         response = requests.get(settings.CAPAPI_BASE_URL+"cases/", {"cite": query})
         results = response.json()['results']
-        results = Paginator(results, 10).get_page(1)
-        results.from_capapi = True
-        counts = facets = None
+        print(results)
+        if len(results) > 0:
+            results = Paginator(results, 10).get_page(1)
+            results.from_capapi = True
+            counts = facets = None
+        else:
+            # CAP doesn't have the citation, so go check FLP:
+            response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?citation={query}')
+            results = response.json()['results']
+            results = Paginator(results, 10).get_page(1)
+            results.from_capapi = True
+            counts = facets = None
+            print(results)
+
+    # query CAP API then FLP API if we are searching for a casename from the add-resource modal:
+    elif category =='case' and partial and looks_like_casename(query):
+        response = requests.get(settings.CAPAPI_BASE_URL + "cases/", {"name_abbreviation": query})
+        results = response.json()['results']
+        if len(results) > 0:
+            results = Paginator(results, 10).get_page(1)
+            results.from_capapi = True
+            counts = facets = None
+        else:
+            # CAP doesn't have the citation, so go check FLP:
+            response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?case_name={query}')
+            results = response.json()['results']
+            results = Paginator(results, 10).get_page(1)
+            results.from_capapi = True
+            counts = facets = None
+            print(results)
 
     # else query postgres:
     else:

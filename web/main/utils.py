@@ -76,6 +76,9 @@ def looks_like_citation(s):
     """
     return bool(re.match(r'\d+(\s+|-).*(\s+|-)\d+$', s))
 
+def looks_like_casename(s):
+    return bool(re.match(r'[A-Z][a-z]*\sv.\s[A-Z][a-z]*', s))
+
 
 def clone_model_instance(instance, **kwargs):
     clone = deepcopy(instance)

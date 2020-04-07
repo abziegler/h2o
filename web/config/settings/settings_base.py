@@ -223,7 +223,7 @@ WEBPACK_LOADER = {
 }
 
 CAPAPI_BASE_URL = 'https://api.case.law/v1/'
-CAPAPI_API_KEY = ''
+CAPAPI_API_KEY = 'aeb4feab4ea137330201b6e0c8ffaaaa63149bf4'
 
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'

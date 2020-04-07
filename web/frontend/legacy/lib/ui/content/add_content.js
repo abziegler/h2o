@@ -64,6 +64,7 @@ class AddResourceModal extends Component {
             request = Axios.get(e.target.href);
           } else {
             this.q = e.target.querySelector('input[name=q]').value;
+            console.log('I am at line 68');
             request = Axios.get(FRONTEND_URLS.search, {
               params: {
                 partial: true,

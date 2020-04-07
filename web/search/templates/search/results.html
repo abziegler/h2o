@@ -25,7 +25,11 @@
           <a href="#" class="wrapper" data-result-id="{{ result.id }}" data-result-type="capapi/case">
             <div class="results-entry">
               <div class="title">
-                {{ result.name_abbreviation }}
+                  {% if result.name_abbreviation %}
+                    {{ result.name_abbreviation }}
+                  {% else %}
+                    {{ result.caseName }}
+                  {% endif %}
               </div>
               <div class="citation">
                 {{ result.citations.0.cite }}
