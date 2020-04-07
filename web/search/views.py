@@ -43,40 +43,59 @@ def search(request):
     query = request.GET.get('q')
     partial = request.GET.get('partial') == 'true'
 
-    # query CAP API if we are searching for a citation from the add-resource modal:
-    if category == 'case' and partial and looks_like_citation(query):
-        response = requests.get(settings.CAPAPI_BASE_URL+"cases/", {"cite": query})
-        results = response.json()['results']
-        print(results)
-        if len(results) > 0:
-            results = Paginator(results, 10).get_page(1)
-            results.from_capapi = True
-            counts = facets = None
-        else:
-            # CAP doesn't have the citation, so go check FLP:
-            response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?citation={query}')
-            results = response.json()['results']
-            results = Paginator(results, 10).get_page(1)
-            results.from_capapi = True
-            counts = facets = None
-            print(results)
+    # If searching for a case from add-resource modal, try to get it from CAP then FLP:
+    if category == 'case' and partial:
 
-    # query CAP API then FLP API if we are searching for a casename from the add-resource modal:
-    elif category =='case' and partial and looks_like_casename(query):
-        response = requests.get(settings.CAPAPI_BASE_URL + "cases/", {"name_abbreviation": query})
-        results = response.json()['results']
-        if len(results) > 0:
-            results = Paginator(results, 10).get_page(1)
-            results.from_capapi = True
-            counts = facets = None
-        else:
-            # CAP doesn't have the citation, so go check FLP:
-            response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?case_name={query}')
+        # Query CAP API and then FLP API if user enters something citation-like
+        if looks_like_citation(query):
+
+            # First try CAP API
+            response = requests.get(settings.CAPAPI_BASE_URL+"cases/", {"cite": query})
+            print('checking CAP for citation')
             results = response.json()['results']
-            results = Paginator(results, 10).get_page(1)
-            results.from_capapi = True
-            counts = facets = None
-            print(results)
+            if len(results) > 0:
+                results = Paginator(results, 10).get_page(1)
+                results.from_capapi = True
+                print(f'CAP citation results: \n {results}')
+                counts = facets = None
+
+            # If CAP can't find it, try FLP
+            else:
+                # TODO add FLP URL to settings
+                headers = {'Authorization': 'Token 65bcaf9945ef0e398a2d05fa76b35f63f8873da4'}
+                response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?citation={query}', headers=headers)
+                print('checking FLP for citation')
+                results = response.json()['results']
+                if len(results) > 0:
+                    results = Paginator(results, 10).get_page(1)
+                    results.from_flp = True
+                    print(f'FLP citation results: \n {results}')
+                    counts = facets = None
+
+        # Query CAP API and then FLP API if user enters something casename-like:
+        elif looks_like_casename(query):
+
+            # First try CAP:
+            response = requests.get(settings.CAPAPI_BASE_URL + "cases/", {"name_abbreviation": query})
+            print('checking CAP for casename')
+            results = response.json()['results']
+            if len(results) > 0:
+                results = Paginator(results, 10).get_page(1)
+                results.from_capapi = True
+                print(f'CAP casename results: \n {results}')
+                counts = facets = None
+
+            # If CAP can't find it, try FLP
+            else:
+                headers = {'Authorization': 'Token 65bcaf9945ef0e398a2d05fa76b35f63f8873da4'}
+                response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?case_name={query}', headers=headers)
+                print('checking FLP for casename')
+                results = response.json()['results']
+                if len(results) > 0:
+                    results = Paginator(results, 10).get_page(1)
+                    results.from_flp = True
+                    print(f'FLP casename results: \n {results}')
+                    counts = facets = None
 
     # else query postgres:
     else:
@@ -97,6 +116,7 @@ def search(request):
             order_by=request.GET.get('sort')
         )
         results.from_capapi = False
+        results.from_FLP = False
 
     if partial:
         return render(request, 'search/results.html', {

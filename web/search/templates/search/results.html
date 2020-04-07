@@ -25,17 +25,27 @@
           <a href="#" class="wrapper" data-result-id="{{ result.id }}" data-result-type="capapi/case">
             <div class="results-entry">
               <div class="title">
-                  {% if result.name_abbreviation %}
-                    {{ result.name_abbreviation }}
-                  {% else %}
-                    {{ result.caseName }}
-                  {% endif %}
+                {{ result.name_abbreviation }}
               </div>
               <div class="citation">
                 {{ result.citations.0.cite }}
               </div>
               <div class="date">
                 {{ result.decision_date }}
+              </div>
+            </div>
+          </a>
+        {% elif results.from_flp %}
+          <a href="#" class="wrapper" data-result-id="{{ result.id }}" data-result-type="flp/case">
+            <div class="results-entry">
+              <div class="title">
+                {{ result.caseName }}
+              </div>
+              <div class="citation">
+                {% if result.citation %}{{ result.citation.0 }}{% endif %}
+              </div>
+              <div class="date">
+                {{ result.dateFiled }}
               </div>
             </div>
           </a>
