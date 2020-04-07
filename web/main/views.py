@@ -1530,6 +1530,10 @@ def from_flp(request):
             except:
                 pass
 
+            # clean-up FLP plaintext a little
+            # TODO: figure out how to handle FLP html
+            content = '\n'.join(line.strip() for line in flp_case['plain_text'].split('\n'))
+
             # create case:
             case = Case(
                 # our db metadata
@@ -1548,7 +1552,7 @@ def from_flp(request):
                 # decision_date=parse_cap_decision_date(cap_case['decision_date']),
 
                 # cap case html
-                content=flp_case['plain_text'],
+                content=content,
                 attorneys=[],
                 # TODO: copying a Rails bug. Using a dict here is incorrect, as the same data-type can appear more than once:
                 # https://github.com/harvard-lil/h2o/issues/1041
