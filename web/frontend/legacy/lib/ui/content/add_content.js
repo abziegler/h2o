@@ -90,8 +90,16 @@ class AddResourceModal extends Component {
 
           if (e.delegateTarget.dataset.resultType == 'capapi/case') {
             Axios
-              .post('/cases/from_capapi', {id: e.delegateTarget.dataset.resultId})
-              .then(response => { add(response.data.id) });
+                .post('/cases/from_capapi', {id: e.delegateTarget.dataset.resultId})
+                .then(response => {
+                  add(response.data.id)
+                });
+          } else if (e.delegateTarget.dataset.resultType == 'flp/case') {
+            Axios
+                .post('/cases/from_flp', {id: e.delegateTarget.dataset.resultId})
+                .then(response => {
+                  add(response.data.id)
+                });
           } else {
             add(e.delegateTarget.dataset.resultId);
           }

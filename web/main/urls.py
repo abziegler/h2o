@@ -68,6 +68,7 @@ urlpatterns = format_suffix_patterns(drf_urlpatterns) + [
     path('casebooks/new', views.new_casebook, name='new_casebook'),
     # cases
     path('cases/from_capapi', views.from_capapi, name='from_capapi'),
+    path('cases/from_flp', views.from_flp, name='from_flp'),
     path('cases/<int:case_id>/', views.case, name='case'),
     # export
     path('casebooks/<casebook:node>/export.<file_type>', views.export, name='export'),

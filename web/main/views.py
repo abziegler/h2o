@@ -1477,6 +1477,87 @@ def from_capapi(request):
 
     return JsonResponse({'id': case.id})
 
+@perms_test({'method': 'post', 'results': {400: ['user'], 'login': [None]}})
+@require_POST
+@login_required
+def from_flp(request):
+    """
+        Given a posted FLP ID, return the internal ID for the same case, first ingesting the case from FLP if necessary.
+
+        TODO Add tests
+    """
+    # parse ID from request:
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        flp_id = int(data['id'])
+    except Exception:
+        return HttpResponseBadRequest("Request body should match {'id': &lsaquo;int&rsaquo'}")
+
+    # try to fetch existing case:
+    case = Case.objects.filter(capapi_id=flp_id, public=True).first()
+
+    if not case:
+        # fetch from FLP:
+        if not settings.CAPAPI_API_KEY:
+            raise CapapiCommunicationException('To interact with CAP, CAPAPI_API_KEY must be set.')
+        try:
+            headers = {'Authorization': 'Token 65bcaf9945ef0e398a2d05fa76b35f63f8873da4'}
+            response = requests.get(f"https://www.courtlistener.com/api/rest/v3/opinions/?id={flp_id}", headers=headers)
+            assert response.ok
+        except (requests.RequestException, AssertionError) as e:
+            msg = "Communication with FLP failed: {}".format(str(e))
+            raise CapapiCommunicationException(msg)
+
+        flp_case = response.json()['results'][0]
+
+        # fetch additional metadata from FLP:
+        if flp_case:
+            try:
+                flp_cluster_url = flp_case['cluster']
+                response = requests.get(flp_cluster_url,headers=headers)
+                flp_cluster = response.json()
+
+                flp_docket_url = flp_cluster['docket']
+                response = requests.get(flp_docket_url,headers=headers)
+                flp_docket = response.json()
+
+                flp_court_url = flp_docket['court']
+                response = requests.get(flp_court_url,headers=headers)
+                flp_court = response.json()
+
+                print(flp_cluster_url, flp_docket_url, flp_court_url)
+
+            except:
+                pass
+
+            # create case:
+            case = Case(
+                # our db metadata
+                created_via_import=True,
+                public=True,
+                capapi_id=flp_id,
+
+                # flp case metadata
+                court_name=flp_court['short_name'],
+                name_abbreviation=flp_cluster['case_name'],
+                name=flp_cluster['case_name_full'],
+                docket_number=flp_docket['docket_number'],
+                citations=flp_cluster['citations'],
+                decision_date='2020-04-07',
+                # TODO: parse FLP decisiondate
+                # decision_date=parse_cap_decision_date(cap_case['decision_date']),
+
+                # cap case html
+                content=flp_case['plain_text'],
+                attorneys=[],
+                # TODO: copying a Rails bug. Using a dict here is incorrect, as the same data-type can appear more than once:
+                # https://github.com/harvard-lil/h2o/issues/1041
+                opinions={},
+            )
+            case.save()
+            print(case)
+
+    return JsonResponse({'id': case.id})
 
 @method_decorator(perms_test(
     {'args': ['casebook', '"docx"'], 'results': {200: [None, 'other_user', 'casebook.testing_editor']}},

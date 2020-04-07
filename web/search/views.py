@@ -93,6 +93,8 @@ def search(request):
                 results = response.json()['results']
                 if len(results) > 0:
                     results = Paginator(results, 10).get_page(1)
+                    for result in results:
+                        print(result['id'])
                     results.from_flp = True
                     print(f'FLP casename results: \n {results}')
                     counts = facets = None
