@@ -1482,9 +1482,23 @@ def from_capapi(request):
 @login_required
 def from_flp(request):
     """
-        Given a posted FLP ID, return the internal ID for the same case, first ingesting the case from FLP if necessary.
+    Given a posted FLP opinion ID, return the internal ID for the same case, first ingesting the case from FLP if necessary.
 
-        TODO Add tests
+    Given:
+    >>> capapi_mock, client, user, case_factory = [getfixture(i) for i in ['capapi_mock', 'client', 'user', 'case_factory']]
+    >>> url = reverse('from_capapi')
+    >>> existing_case = case_factory(capapi_id=9999)
+
+    Existing cases will be returned without hitting the CAP API:
+    >>> response = client.post(url, json.dumps({'id': 9999}), content_type="application/json", as_user=user)
+    >>> check_response(response, content_includes='{"id": %s}' % existing_case.id, content_type='application/json')
+
+    Non-existing cases will be fetched and created:
+    >>> response = client.post(url, json.dumps({'id': 12345}), content_type="application/json", as_user=user)
+    >>> check_response(response, content_type='application/json')
+    >>> case = Case.objects.get(id=json.loads(response.content.decode())['id'])
+    >>> assert case.name_abbreviation == "1-800 Contacts, Inc. v. Lens.Com, Inc."
+    >>> assert case.opinions == {"majority": "HARTZ, Circuit Judge."}
     """
     # parse ID from request:
     try:
@@ -1498,10 +1512,10 @@ def from_flp(request):
 
     if not case:
         # fetch from FLP:
-        if not settings.CAPAPI_API_KEY:
-            raise CapapiCommunicationException('To interact with CAP, CAPAPI_API_KEY must be set.')
+        if not settings.FLP_API_KEY:
+            raise CapapiCommunicationException('To interact with FLP, FLP_API_KEY must be set.')
         try:
-            headers = {'Authorization': 'Token 65bcaf9945ef0e398a2d05fa76b35f63f8873da4'}
+            headers = {'Authorization': f'Token {settings.FLP_API_KEY}'}
             response = requests.get(f"https://www.courtlistener.com/api/rest/v3/opinions/?id={flp_id}", headers=headers)
             assert response.ok
         except (requests.RequestException, AssertionError) as e:
@@ -1525,13 +1539,12 @@ def from_flp(request):
                 response = requests.get(flp_court_url,headers=headers)
                 flp_court = response.json()
 
-                print(flp_cluster_url, flp_docket_url, flp_court_url)
-
             except:
                 pass
 
             # clean-up FLP plaintext a little
-            # TODO: figure out how to handle FLP html
+            # TODO: figure out how to handle FLP html if it exists
+            # TODO: is there a better way to clean up FLP plaintext?
             content = '\n'.join(line.strip() for line in flp_case['plain_text'].split('\n'))
 
             # create case:
@@ -1547,9 +1560,7 @@ def from_flp(request):
                 name=flp_cluster['case_name_full'],
                 docket_number=flp_docket['docket_number'],
                 citations=flp_cluster['citations'],
-                decision_date='2020-04-07',
-                # TODO: parse FLP decisiondate
-                # decision_date=parse_cap_decision_date(cap_case['decision_date']),
+                decision_date=flp_cluster['date_filed'],
 
                 # cap case html
                 content=content,

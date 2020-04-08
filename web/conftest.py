@@ -490,6 +490,104 @@ def capapi_mock(requests_mock):
         }
     })
 
+@pytest.fixture
+def flp_mock(requests_mock):
+    """
+        Mock responses for queries run by FLP import functions.
+    """
+    # mock citation search results
+    requests_mock.get('/v3/search/?citation=158 F. Supp. 2d 1', json={
+        "count": 1234,
+        "next": null,
+        "previous": null,
+        "results": [
+            {
+                "absolute_url": "/opinion/2415122/sculimbrene-v-reno/",
+                "attorney": "",
+                "author_id": null,
+                "caseName": "Sculimbrene v. Reno",
+                "caseNameShort": "Sculimbrene",
+                "citation": [
+                    "158 F. Supp. 2d 1"
+                ],
+                "citeCount": 5,
+                "cites": [
+                    105573,
+                    109455,
+                    110965,
+                    111987,
+                ],
+                "cluster_id": 2415122,
+                "court": "District Court, District of Columbia",
+                "court_citation_string": "D.D.C.",
+                "court_exact": "dcd",
+                "court_id": "dcd",
+                "dateArgued": null,
+                "dateFiled": "2001-02-16T07:53:00Z",
+                "dateReargued": null,
+                "dateReargumentDenied": null,
+                "docketNumber": "CIV.A. 99-2010(CKK)",
+                "docket_id": 2287328,
+                "download_url": null,
+                "id": 2415122,
+                "joined_by_ids": null,
+                "judge": "Kollar-Kotelly",
+                "lexisCite": null,
+                "local_path": "",
+                "neutralCite": null,
+                "non_participating_judge_ids": null,
+                "pagerank": null,
+                "panel_ids": null,
+                "per_curiam": null,
+                "scdb_id": "",
+                "sibling_ids": [
+                    2415122
+                ],
+                "snippet": "\n\n    \n158 F.Supp.2d 1 (2001)\nM. Dennis SCULIMBRENE, Plaintiff,\nv.\nJanet RENO, et al., Defendants.\nNo. CIV.A. 99-2010(CKK).\nUnited States District Court, District of Columbia.\nFebruary 16, 2001.\nPaul J. Orfanedes, Klayman &amp;amp; Associates, PC, Larry E. Klayman, Judicial Watch, Inc., Washington, D.C., for Plaintiff.\nAnne L. Weissman, John Russell Tyler, U.S. Dept. of Justice, Timothy B. Mills, Patton Boggs, L.L.P., Washington, D.C., Thomas P. Ryan, McCarthy, Wilson &amp;amp; Ethridge, Rockvil",
+                "source": "L",
+                "status": "Precedential",
+                "status_exact": "Precedential",
+                "suitNature": "",
+                "timestamp": "2020-01-08T21:30:48.109000Z",
+                "type": "010combined"
+            }
+        ]
+    }
+    # mock case detail results
+    requests_mock.get('/v1/cases/12345/', json={
+        "id": 12345,
+        "name": "1-800 CONTACTS, INC., Plaintiff-Appellant/Cross-Appellee, v. LENS.COM, INC.",
+        "name_abbreviation": "1-800 Contacts, Inc. v. Lens.Com, Inc.",
+        "decision_date": "2013-07-16",
+        "docket_number": "Nos. 11-4114, 11-4204, 12-4022",
+        "citations": [
+            {
+                "cite": "722 F.3d 1229",
+                "type": "official"
+            }
+        ],
+        "court": {
+            "name_abbreviation": "10th Cir.",
+            "name": "United States Court of Appeals for the Tenth Circuit",
+            "id": 8771
+        },
+        "casebody": {
+            "data": """
+                <section class="casebody" data-case-id="32044132252420_0111" data-firstpage="1229" data-lastpage="1257">
+                    <section class="head-matter">
+                        <h4 class="parties" id="b1241-8">1-800 CONTACTS, INC., Plaintiff-Appellant/Cross-Appellee, v. LENS.COM, INC.</h4>
+                        <p class="attorneys" id="b1245-28"><a class="page-label">*1233</a>Mark A. Miller, Holland &amp; Hart LLP</p>
+                        <p class="attorneys" id="b1246-4">Scott R. Ryther, Phillips Ryther <em>&amp; </em>Winchester</p>
+                    </section>
+                    <article class="opinion" data-type="majority">
+                        <p class="author" id="b1246-6">HARTZ, Circuit Judge.</p>
+                        <p id="b1246-7">The Lanham Act, 15 U.S.C. §§ 1051-1127 ...</p>
+                    </article>
+                </section>
+            """,
+            "status": "ok"
+        }
+    })
 
 @pytest.fixture(scope='function')
 def assert_num_queries(pytestconfig, monkeypatch):
