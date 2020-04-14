@@ -33,6 +33,8 @@ def search(request):
         ...     client.get(url, {'type': 'cases', 'q': '722 F.3d 1229', 'partial': 'true'}),
         ...     content_includes=['data-result-id="1" data-result-type="capapi/case"', '1-800 Contacts, Inc. v. Lens.Com, Inc.'],
         ... )
+
+        TODO: add test for FLP search
     """
     # read query parameters
     category = type_param_to_category.get(request.GET.get('type', None), 'casebook')
@@ -61,7 +63,7 @@ def search(request):
             else:
                 # TODO add FLP URL to settings
                 headers = {'Authorization': f'Token {settings.FLP_API_KEY}'}
-                response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?citation={query}', headers=headers)
+                response = requests.get(settings.FLP_BASE_URL+f"search/?citation={query}", headers=headers)
                 results = response.json()['results']
                 if len(results) > 0:
                     results = Paginator(results, 10).get_page(1)
@@ -85,7 +87,7 @@ def search(request):
             # If CAP can't find it, try FLP
             else:
                 headers = {'Authorization': f'Token {settings.FLP_API_KEY}'}
-                response = requests.get(f'https://www.courtlistener.com/api/rest/v3/search/?case_name={query}', headers=headers)
+                response = requests.get(settings.FLP_BASE_URL+f"search/?case_name={query}", headers=headers)
                 results = response.json()['results']
                 if len(results) > 0:
                     results = Paginator(results, 10).get_page(1)

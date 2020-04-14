@@ -224,6 +224,8 @@ WEBPACK_LOADER = {
 
 CAPAPI_BASE_URL = 'https://api.case.law/v1/'
 CAPAPI_API_KEY = os.getenv("CAPAPI_API_KEY")
+
+FLP_BASE_URL = 'https://www.courtlistener.com/api/rest/v3/'
 FLP_API_KEY = os.getenv("FLP_API_KEY")
 
 

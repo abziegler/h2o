@@ -1482,23 +1482,7 @@ def from_capapi(request):
 @login_required
 def from_flp(request):
     """
-    Given a posted FLP opinion ID, return the internal ID for the same case, first ingesting the case from FLP if necessary.
-
-    Given:
-    >>> capapi_mock, client, user, case_factory = [getfixture(i) for i in ['capapi_mock', 'client', 'user', 'case_factory']]
-    >>> url = reverse('from_capapi')
-    >>> existing_case = case_factory(capapi_id=9999)
-
-    Existing cases will be returned without hitting the CAP API:
-    >>> response = client.post(url, json.dumps({'id': 9999}), content_type="application/json", as_user=user)
-    >>> check_response(response, content_includes='{"id": %s}' % existing_case.id, content_type='application/json')
-
-    Non-existing cases will be fetched and created:
-    >>> response = client.post(url, json.dumps({'id': 12345}), content_type="application/json", as_user=user)
-    >>> check_response(response, content_type='application/json')
-    >>> case = Case.objects.get(id=json.loads(response.content.decode())['id'])
-    >>> assert case.name_abbreviation == "1-800 Contacts, Inc. v. Lens.Com, Inc."
-    >>> assert case.opinions == {"majority": "HARTZ, Circuit Judge."}
+    TODO: Tests
     """
     # parse ID from request:
     try:
@@ -1542,9 +1526,10 @@ def from_flp(request):
             except:
                 pass
 
-            # clean-up FLP plaintext a little
-            # TODO: figure out how to handle FLP html if it exists
-            # TODO: is there a better way to clean up FLP plaintext?
+            # Minimal clean-up of FLP plaintext
+            # TODO: handle FLP html if it exists
+            # TODO: parse FLP plaintext
+
             content = '\n'.join(line.strip() for line in flp_case['plain_text'].split('\n'))
 
             # create case:
